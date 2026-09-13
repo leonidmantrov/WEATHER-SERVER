@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: meteo
+      POSTGRES_PASSWORD: meteo_password
+      POSTGRES_DB: weather_server
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meteo -d weather_server"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://meteo:meteo_password@postgres:5432/weather_server
+      ADMIN_KEY: eb1d7a52-d4a1-2312-9045-68ae7a493bd7
+      USER_TOKEN: cb1d3a52-d4a1-1234-8045-75ae7a493bd7
+      SECRET_KEY: dev-secret-key
+      FLASK_ENV: development
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+volumes:
+  postgres_data:
